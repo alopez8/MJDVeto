@@ -172,13 +172,7 @@ void builtVetoMult2readershort(string Input = ""){
 	
 	//=== Global counters / variables / plots ===
 	
-		Int_t tbonly = 0;
-		Int_t tcount = 0;
-		Int_t bcount = 0;
-		Int_t ncount = 0;
-		Int_t wcount = 0;
-		Int_t ecount = 0;
-		Int_t scount = 0;
+		Int_t tbmuoncount = 0;
 		
 		Int_t run = 0;
 		Float_t duration = 0;
@@ -542,12 +536,12 @@ void builtVetoMult2readershort(string Input = ""){
 						if (QDC[k]>muonthresh[k]){
 							muonnumPanelsHit++;
 							//determine which panels where hit (top,bottom,west,east,north,south) | must be done before writing muonn qdcs to top/bot only graphs
-							if (PanelMap(k)== 0 || 1) isBotMuon = true;
+							if (PanelMap(k)== 0 || PanelMap(k)== 1) isBotMuon = true;
 							if (PanelMap(k)== 2) isTopMuon = true;
-							if (PanelMap(k)== 3 || 4) isNorthMuon = true;
-							if (PanelMap(k)== 5 || 6) isEastMuon = true;
-							if (PanelMap(k)== 7 || 8) isSouthMuon = true;
-							if (PanelMap(k)== 9 || 10) isWestMuon = true;
+							if (PanelMap(k)== 3 || PanelMap(k)== 4) isNorthMuon = true;
+							if (PanelMap(k)== 5 || PanelMap(k)== 6) isEastMuon = true;
+							if (PanelMap(k)== 7 || PanelMap(k)== 8) isSouthMuon = true;
+							if (PanelMap(k)== 9 || PanelMap(k)== 10) isWestMuon = true;
 						}	
 					}
 					else { if (!IsUnderThreshold[k]) lednumPanelsHit++; }
@@ -634,7 +628,7 @@ void builtVetoMult2readershort(string Input = ""){
 						if (muonnumPanelsHit > k) hMuonMult[k]->Fill(muonnumPanelsHit);
 						if(QDC[k]>muonthresh[k]){
 							gMuonAmpvphits->SetPoint(totmuoncount,QDC[k],muonnumPanelsHit);
-							if (isMuon && isTopMuon && isBotMuon){	//the isMuon here is redundant but a good check.
+							if (isMuon && isTopMuon && isBotMuon && !isSouthMuon && !isEastMuon && !isNorthMuon && !isWestMuon){	//the isMuon here is redundant but a good check.
 								gMuonAmpvphitsTB->SetPoint(totmuoncount,QDC[k],muonnumPanelsHit);
 							}	
 							hMuonCutQDC[filesScanned][k]->Fill(QDC[k]);
@@ -647,16 +641,10 @@ void builtVetoMult2readershort(string Input = ""){
 					}			
 					AvgMuonQDCvalue = MuonQDCtot/((double) muonnumPanelsHit);
 					gAvgMuonAmpvphits->SetPoint(totmuoncount,AvgMuonQDCvalue,muonnumPanelsHit);
-					if (isMuon && isTopMuon && isBotMuon && isSouthMuon && isEastMuon){
+					if (isMuon && isTopMuon && isBotMuon && !isSouthMuon && !isEastMuon && !isNorthMuon && !isWestMuon){
 						gAvgMuonAmpvphitsTB->SetPoint(totmuoncount,AvgMuonQDCvalue,muonnumPanelsHit);
-						tbonly++;
+						tbmuoncount++;
 					}
-					if (isTopMuon) tcount++;
-					if (isBotMuon) bcount++;
-					if (isNorthMuon) ncount++;
-					if (isSouthMuon) scount++;
-					if (isEastMuon) ecount++;
-					if (isWestMuon) wcount++;
 					hAvgMuonQDC->Fill(AvgMuonQDCvalue);
 					MuonQDCtot = 0;
 					
@@ -772,13 +760,8 @@ void builtVetoMult2readershort(string Input = ""){
 	stats << "Total LED Count: " << totledcount << endl;
 	stats << "Total Muon Count: " << totmuoncount << endl;
 	stats << "Number of Bad Durations: " << baddurcount << endl;
-	stats << "number of TB only muons: " << tbonly << endl;
-	stats << "numer of top muons: " << tcount << endl;
-	stats << "numer of bottom muons: " << bcount << endl;
-	stats << "numer of west muons: " << wcount << endl;
-	stats << "numer of north muons: " << ncount << endl;
-	stats << "number of east muons (should be 0): " << ecount << endl;
-	stats << "number of south muons (should be 0): " << scount << endl;
+	stats << "Number of TB only muons: " << tbmuoncount << endl;
+
 	
 
 //	TCanvas *c1 = new TCanvas("c1", "Bob Ross's Canvas",600,600);
