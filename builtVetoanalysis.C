@@ -3,6 +3,7 @@
 // Run in compiled mode with .x vetoReader.C++
 // 
 // Clint Wiseman, University of South Carolina
+// Andrew Lopez, UTK/Majorana
 // 11/16/2015
 
 /*
@@ -71,7 +72,7 @@ void builtVetoanalysis(){
 		TH1::AddDirectory(kFALSE); // Global flag: "When a (root) file is closed, all histograms in memory associated with this file are automatically deleted."
 	
 		ofstream vastats;
-		vastats.open ("vastats.txt");
+		vastats.open ("va_stats.txt");
 		
 		Char_t hname[50];
 		
@@ -86,10 +87,10 @@ void builtVetoanalysis(){
 				hLEDCutQDC[i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
 				sprintf(hname,"hMuonCutQDC%d",i);
 				hMuonCutQDC[i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
-			}
+		}
 
 	// Initialize with standard ROOT methods	
-	TFile *f = new TFile("/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3JDY/OR_run4574.root");
+	TFile *f = new TFile("/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3K93/OR_run8569.root");
 	TTree *v = (TTree*)f->Get("VetoTree");
 	TTree *b = (TTree*)f->Get("MGTree");
 	Long64_t nentries = v->GetEntries();
@@ -132,7 +133,7 @@ void builtVetoanalysis(){
 	
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //loop over VetoTree entries	
-for (int z = 0; z < nentries; z++){
+for (int z = nentries -1; z < nentries; z++){
 	
 	//define single entry variables
 	Int_t lednumPanelsHit = 0;
@@ -331,6 +332,20 @@ for (int z = 0; z < nentries; z++){
 			}
 
 		}			
+	}
+	
+	if (lednumPanelsHit >24) {
+		vastats << "nentry " << z << " hit " << lednumPanelsHit << " panels." << endl;
+		for (int k=0; k<numPanels; k++){
+			vastats << "Panel k: " << k << " | QDC[k] = " << QDC[k] << endl;
+		}
+	}
+	
+	if (z == 171) {
+		vastats << "nentry " << z << " hit " << lednumPanelsHit << " panels." << endl;
+		for (int k=0; k<numPanels; k++){
+			vastats << "Panel k: " << k << " | QDC[k] = " << QDC[k] << endl;
+		}
 	}
 	
 } // End loop over VetoTree entries.

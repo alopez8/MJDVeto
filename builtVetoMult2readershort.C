@@ -173,6 +173,7 @@ void builtVetoMult2readershort(string Input = ""){
 	//=== Global counters / variables / plots ===
 	
 		Int_t tbmuoncount = 0;
+		Int_t phantomfilecount = 0;
 		
 		Int_t run = 0;
 		Float_t duration = 0;
@@ -517,6 +518,8 @@ void builtVetoMult2readershort(string Input = ""){
 				Bool_t isSouthMuon = false;
 				Bool_t isWestMuon = false;
 				Bool_t isEastMuon = false;
+				
+				Bool_t isPhantom = false;
 		
 				if (isBadTS) { 
 					BadTSInFile++;
@@ -548,8 +551,8 @@ void builtVetoMult2readershort(string Input = ""){
 				
 				}
 				
-				if (lednumPanelsHit > 24) {
-					phantom << run << endl;
+				if (QDC[24] > 0 || QDC[25] > 0 || QDC[26] > 0 || QDC[27] > 0 || QDC[28] > 0 || QDC[29] > 0 || QDC[30] > 0 || QDC[31] > 0 ) {
+					isPhantom = true;
 				}
 				
 		      	TotalMultiplicity->Fill(lednumPanelsHit);			
@@ -658,6 +661,11 @@ void builtVetoMult2readershort(string Input = ""){
 		}	// End loop over VetoTree entries.
 
 		// === END OF FILE Output & Plotting ===
+		if (isPhantom) {
+			phantomfilecount++;
+			phantom << run << endl;
+		}	
+		
 		if (filesScanned == 0){
 			TDirectory *runmultiplicity = RootFile->mkdir("RunMultiplicity");	
 			TDirectory *corruptionintime = RootFile->mkdir("CorruptionInTime");
@@ -761,6 +769,8 @@ void builtVetoMult2readershort(string Input = ""){
 	stats << "Total Muon Count: " << totmuoncount << endl;
 	stats << "Number of Bad Durations: " << baddurcount << endl;
 	stats << "Number of TB only muons: " << tbmuoncount << endl;
+	
+	phantom << "Number of files that hit phantom panels: " << phantomfilecount << endl;
 
 	
 
@@ -773,6 +783,7 @@ void builtVetoMult2readershort(string Input = ""){
 	SCorruption->GetXaxis()->SetTitle("Run");
 	SCorruption->GetYaxis()->SetTitle("% corrupted events");
 //	SCorruption->Draw("ALP");	
+	SCorruption->SetLineColorAlpha(kWhite,0);
 	
 	SCorruption->Write("ScalerCorruption",TObject::kOverwrite);
 
@@ -803,6 +814,7 @@ void builtVetoMult2readershort(string Input = ""){
 	AvgFileLEDQDCgraph->SetMarkerColor(4);
 	AvgFileLEDQDCgraph->SetMarkerStyle(21);
 	AvgFileLEDQDCgraph->SetMarkerSize(0.5);
+	AvgFileLEDQDCgraph->SetLineColorAlpha(kWhite,0);
 //	AvgFileLEDQDCgraph->Draw("AP");	
 	AvgFileLEDQDCgraph->Write("AvgFileLEDQDCgraph",TObject::kOverwrite);
 
@@ -811,7 +823,8 @@ void builtVetoMult2readershort(string Input = ""){
 //	c6->SetGrid();
 	ledFiletime->SetMarkerColor(4);
 	ledFiletime->SetMarkerStyle(21);
-	ledFiletime->SetMarkerSize(0.5);
+	ledFiletime->SetMarkerSize(0.5);   
+	ledFiletime->SetLineColorAlpha(kWhite,0);
 //	ledFiletime->Draw("ALP");	
 	ledFiletime->Write("LEDFileTime",TObject::kOverwrite);
 
@@ -826,6 +839,7 @@ void builtVetoMult2readershort(string Input = ""){
 	ledfitslope->SetMarkerColor(4);
 	ledfitslope->SetMarkerStyle(21);
 	ledfitslope->SetMarkerSize(0.5);
+	ledfitslope->SetLineColorAlpha(kWhite,0);
 //	ledfitslope->Draw("ALP");	
 	ledfitslope->Write("LEDFitSlope",TObject::kOverwrite);
 	
@@ -847,6 +861,7 @@ void builtVetoMult2readershort(string Input = ""){
 //	TCanvas *c13 = new TCanvas("c13", "runnum vs led DT", 600,600);
 //	c13->SetGrid();
 //	gRunvDT->Draw("AP");	
+	gRunvDT->SetLineColorAlpha(kWhite,0);
 	gRunvDT->Write("gRunvDT",TObject::kOverwrite);
 	
 	hRunvMuonMult->Write();
@@ -854,26 +869,31 @@ void builtVetoMult2readershort(string Input = ""){
 //	TCanvas *c14 = new TCanvas("c14", "muon qdc vs MuonnumPanelsHit", 600,600);
 //	c14->SetGrid();
 //	gMuonAmpvphits->Draw("AP");	
+	gMuonAmpvphits->SetLineColorAlpha(kWhite,0);
 	gMuonAmpvphits->Write("gMuonAmpvphits",TObject::kOverwrite);
 	
 //	TCanvas *c15 = new TCanvas("c15", "avg muon qdc vs MuonnumPanelsHit", 600,600);
 //	c15->SetGrid();
-//	gAvgMuonAmpvphits->Draw("AP");	
+//	gAvgMuonAmpvphits->Draw("AP");
+	gAvgMuonAmpvphits->SetLineColorAlpha(kWhite,0);
 	gAvgMuonAmpvphits->Write("gAvgMuonAmpvphits",TObject::kOverwrite);
 	
 //	TCanvas *c16 = new TCanvas("c16", "muon qdc vs MuonnumPanelsHit (Top and Bottom only)", 600,600);
 //	c16->SetGrid();
 //	gMuonAmpvphitsTB->Draw("AP");	
+	gMuonAmpvphitsTB->SetLineColorAlpha(kWhite,0);
 	gMuonAmpvphitsTB->Write("gMuonAmpvphitsTB",TObject::kOverwrite);
 	
 //	TCanvas *c17 = new TCanvas("c17", "avg muon qdc vs MuonnumPanelsHit (Top and Bottom only)", 600,600);
 //	c17->SetGrid();
-//	gAvgMuonAmpvphitsTB->Draw("AP");	
+//	gAvgMuonAmpvphitsTB->Draw("AP");
+	gAvgMuonAmpvphitsTB->SetLineColorAlpha(kWhite,0);
 	gAvgMuonAmpvphitsTB->Write("gAvgMuonAmpvphitsTB",TObject::kOverwrite);
 	
 //	TCanvas *c18 = new TCanvas("c18", "runnum vs ledcount/durarray", 600,600);
 //	c18->SetGrid();
 //	gRunvLEDdivideDur->Draw("AP");	
+	gRunvLEDdivideDur->SetLineColorAlpha(kWhite,0);
 	gRunvLEDdivideDur->Write("gRunvLEDdivideDur",TObject::kOverwrite);
 	
 	
