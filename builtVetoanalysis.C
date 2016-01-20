@@ -51,6 +51,7 @@ void builtVetoanalysis(){
 	Int_t ledcount = 0;
 	Int_t muoncount = 0;
 	Float_t duration = 0;
+	Int_t run = 0;
 
 
 //led (low) qdc threshold values from findThresh.C
@@ -90,7 +91,7 @@ void builtVetoanalysis(){
 		}
 
 	// Initialize with standard ROOT methods	
-	TFile *f = new TFile("/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3K93/OR_run8569.root");
+	TFile *f = new TFile("/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3K93/OR_run8686.root");
 	TTree *v = (TTree*)f->Get("VetoTree");
 	TTree *b = (TTree*)f->Get("MGTree");
 	Long64_t nentries = v->GetEntries();
@@ -133,7 +134,7 @@ void builtVetoanalysis(){
 	
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //loop over VetoTree entries	
-for (int z = nentries -1; z < nentries; z++){
+for (int z = 0; z < nentries; z++){
 	
 	//define single entry variables
 	Int_t lednumPanelsHit = 0;
@@ -164,6 +165,7 @@ for (int z = nentries -1; z < nentries; z++){
 	// Unsigned int from MGTypes.hh -- kData=0, kTest=1, kCalibration=2, kMC=3, kUndefined=4																	  
 	printf("Run Type: %u\n",VetoRun->GetRunType());  
 	printf("Run Number: %i\n",VetoRun->GetRunNumber());
+	run = VetoRun->GetRunNumber();
 
 	// Set in /MJOR/MOVetoDataLoader.cc:    fRun->SetRunDescription("Orca run");
 	// Returns a string.
@@ -333,7 +335,7 @@ for (int z = nentries -1; z < nentries; z++){
 
 		}			
 	}
-	
+/*	
 	if (lednumPanelsHit >24) {
 		vastats << "nentry " << z << " hit " << lednumPanelsHit << " panels." << endl;
 		for (int k=0; k<numPanels; k++){
@@ -347,7 +349,7 @@ for (int z = nentries -1; z < nentries; z++){
 			vastats << "Panel k: " << k << " | QDC[k] = " << QDC[k] << endl;
 		}
 	}
-	
+*/	
 } // End loop over VetoTree entries.
 	cout << "ledcount = " << ledcount << endl;
 	cout << "muoncount = " << muoncount << endl;
@@ -379,6 +381,7 @@ for (int z = nentries -1; z < nentries; z++){
 
 	cout << "Wrote ROOT file." << endl;
 	
+	vastats << "run # = " << run << " seconds" << endl;
 	vastats << "ledcount = " << ledcount << endl;
 	vastats << "muoncount = " << muoncount << endl;
 	vastats << "duration = " << duration << endl;

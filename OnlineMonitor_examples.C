@@ -125,7 +125,7 @@ TH1F *hLEDrmsQDCPanel[numPanels];
 TGraph *gmuonqdcnumPanelsHit[numPanels]; //1d graphs of "muon" qdc values in order of muonnumPanelsHit (i.e. graph 3 will show all qdc values of muons that fire on 3 panels)
 TGraph *ledtimestamp[numFiles];
 
-void builtVetoMult2readershort(string Input = ""){
+void OnlineMonitor_examples(string Input = ""){
 
 	int card1 = 13;
 	int card2 = 18;
@@ -144,7 +144,7 @@ void builtVetoMult2readershort(string Input = ""){
 
 	
 	// Input a list of run numbers
-	if (Input == "") Char_t InputName[200] = "builtVeto_DebugListshort";
+	if (Input == "") Char_t InputName[200] = "OnlineMonitor_list";
 	else Char_t InputName[200] = Input.c_str();
 	Char_t InputFile[200];
 	sprintf(InputFile,"%s.txt",InputName);
@@ -159,13 +159,13 @@ void builtVetoMult2readershort(string Input = ""){
   	TH1::AddDirectory(kFALSE); // Global flag: "When a (root) file is closed, all histograms in memory associated with this file are automatically deleted."
 	
 	ofstream lowdt;
-	lowdt.open ("short_zerodeltat.txt");
+	lowdt.open ("OM_zerodeltat.txt");
 	ofstream shortfile;
-	shortfile.open ("short_shortfiles.txt");
+	shortfile.open ("OM_shortfiles.txt");
 	ofstream emptyfile;
-	emptyfile.open ("short_emptyfiles.txt");
+	emptyfile.open ("OM_emptyfiles.txt");
 	ofstream stats;
-	stats.open ("short_Mult2readerstats.txt");
+	stats.open ("OM_Mult2readerstats.txt");
 	
 	ofstream phantom;
 	phantom.open ("short_hitphantompanels.txt");
@@ -315,14 +315,6 @@ void builtVetoMult2readershort(string Input = ""){
 		gRunvLEDdivideDur->SetMarkerColor(4);
 		gRunvLEDdivideDur->SetMarkerStyle(21);
 		gRunvLEDdivideDur->SetMarkerSize(0.5);
-	
-		TGraph *gRunvDuration = new TGraph(2000);
-		gRunvDuration->SetTitle("run number vs duration");
-		gRunvDuration->GetXaxis()->SetTitle("Run Number");
-		gRunvDuration->GetYaxis()->SetTitle("Duration");
-		gRunvDuration->SetMarkerColor(4);
-		gRunvDuration->SetMarkerStyle(21);
-		gRunvDuration->SetMarkerSize(0.5);
 	
 		Char_t hname[50];
 		
@@ -752,8 +744,6 @@ void builtVetoMult2readershort(string Input = ""){
 		if (!IsEmpty){
 			ledfitslope->SetPoint(j,runnum[j],slope[j]);
 		}
-		
-		gRunvDuration->SetPoint(j,runnum[j],Durarray[j]);
 	}
 	
 	for (int i=0; i<numFiles; ++i){
@@ -905,12 +895,6 @@ void builtVetoMult2readershort(string Input = ""){
 //	gRunvLEDdivideDur->Draw("AP");	
 	gRunvLEDdivideDur->SetLineColorAlpha(kWhite,0);
 	gRunvLEDdivideDur->Write("gRunvLEDdivideDur",TObject::kOverwrite);
-	
-//	TCanvas *c19 = new TCanvas("c19", "runnum vs durarray", 600,600);
-//	c19->SetGrid();
-//	gRunvDuration->Draw("AP");	
-	gRunvDuration->SetLineColorAlpha(kWhite,0);
-	gRunvDuration->Write("gRunvDuration",TObject::kOverwrite);
 	
 	
 //	TCanvas *vcan0 = new TCanvas("vcan0","raw veto QDC, panels 1-32",0,0,1600,900);
