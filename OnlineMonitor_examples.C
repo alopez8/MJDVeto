@@ -166,9 +166,8 @@ void OnlineMonitor_examples(string Input = ""){
 	emptyfile.open ("OM_emptyfiles.txt");
 	ofstream stats;
 	stats.open ("OM_Mult2readerstats.txt");
-	
 	ofstream phantom;
-	phantom.open ("short_hitphantompanels.txt");
+	phantom.open ("OM_hitphantompanels.txt");
 	
 	//=== Global counters / variables / plots ===
 	

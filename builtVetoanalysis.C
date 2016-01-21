@@ -40,6 +40,9 @@ using namespace std;
 //using namespace CLHEP;
 #endif
 
+Char_t TheFile[200];
+const char *run_dir = "P3KJR"; //string name of run directory
+Int_t Run_to_investigate = 9729;
 const int numPanels = 32;
 TH1F *hRawQDC[numPanels];  
 TH1F *hLEDCutQDC[numPanels];
@@ -91,7 +94,9 @@ void builtVetoanalysis(){
 		}
 
 	// Initialize with standard ROOT methods	
-	TFile *f = new TFile("/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3K93/OR_run8686.root");
+	sprintf(TheFile,"/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/%s/OR_run%u.root",run_dir,Run_to_investigate);
+	TFile *f = new TFile(TheFile);
+
 	TTree *v = (TTree*)f->Get("VetoTree");
 	TTree *b = (TTree*)f->Get("MGTree");
 	Long64_t nentries = v->GetEntries();
@@ -126,10 +131,16 @@ void builtVetoanalysis(){
 	MJTRun *VetoRun = new MJTRun();
 	MGTBasicEvent *vetoEvent = new MGTBasicEvent(); 
 	UInt_t mVeto = 0;
+	uint32_t vBits = 0;
+
 	
 	v->SetBranchAddress("run",&VetoRun);
 	v->SetBranchAddress("mVeto",&mVeto);
 	v->SetBranchAddress("vetoEvent",&vetoEvent);
+	VetoTree->SetBranchAddress("vetoBits",&vBits);
+	
+	//define vBit counters
+	Int_t kmccount = 0;
 
 	
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -141,7 +152,12 @@ for (int z = 0; z < nentries; z++){
 	Int_t muonnumPanelsHit = 0;
 	Bool_t isLED = false; //to mark whether an event is an LED or not
 	
+
+	
 	v->GetEntry(z);
+	
+	//veto error bits
+//	if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels())) kmccount++;
 		
 	//cout << "z = " << z << endl;
 	//v->GetEntry(nentries-1);
@@ -385,6 +401,8 @@ for (int z = 0; z < nentries; z++){
 	vastats << "ledcount = " << ledcount << endl;
 	vastats << "muoncount = " << muoncount << endl;
 	vastats << "duration = " << duration << endl;
+	vastats << "nentries = " << nentries << endl;
+	vastats << "# of entries that flip kMissingChannels bit = " << kmccount << endl;
 	vastats.close();
 	
 //	ofstream lowdt;

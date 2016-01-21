@@ -106,11 +106,13 @@ int PanelMap(int i){
 	else return -1;
 }
 
+const Char_t *run_dir = "P3KJR"; //string name of run directory
 const int numPanels = 32;
-const int numFiles = 136;
-const int runmin = 8557; //first run number in debug list
-const int runmax = 8697; //last run number in debug list
+const int numFiles = 10;
+const int runmin = 9676; //first run number in debug list
+const int runmax = 9729; //last run number in debug list
 const int runspace = runmax - runmin + 1; //how many runs between runmax and runmin
+const int mode = 0;	//if mode = 1 it's a short list (include rawqdc), if mode = 0, long list (doesn't include rawqdc)
 
 
 // global pointers for qdc histograms.
@@ -122,6 +124,7 @@ TH1F *hMuonMult[numPanels];
 TH1F *hMuonManyQDC[numPanels];
 TH1F *hLEDAvgQDCPanel[numPanels];
 TH1F *hLEDrmsQDCPanel[numPanels];
+TH1F *hDTFile[numFiles];
 TGraph *gmuonqdcnumPanelsHit[numPanels]; //1d graphs of "muon" qdc values in order of muonnumPanelsHit (i.e. graph 3 will show all qdc values of muons that fire on 3 panels)
 TGraph *ledtimestamp[numFiles];
 
@@ -174,6 +177,11 @@ void builtVetoMult2readershort(string Input = ""){
 	
 		Int_t tbmuoncount = 0;
 		Int_t phantomfilecount = 0;
+		
+		Float_t dt_mean = 0;
+		Float_t dt_rms = 0;
+		Int_t dt_maxbin = 0;
+		
 		
 		Int_t run = 0;
 		Float_t duration = 0;
@@ -326,21 +334,25 @@ void builtVetoMult2readershort(string Input = ""){
 	
 		Char_t hname[50];
 		
-		for (Int_t j=0; j<numFiles; j++){
+		if (mode == 0){
+			for (Int_t j=0; j<numFiles; j++){
 			
-			for (Int_t i=0; i<numPanels; i++){
-				sprintf(hname,"File%dhRawQDC%d",j,i);
-				hRawQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
-				sprintf(hname,"File%dhLEDCutQDC%d",j,i);
-				hLEDCutQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
-				sprintf(hname,"File%dhMuonCutQDC%d",j,i);
-				hMuonCutQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
+				for (Int_t i=0; i<numPanels; i++){
+					sprintf(hname,"File%dhRawQDC%d",j,i);
+					hRawQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
+					sprintf(hname,"File%dhLEDCutQDC%d",j,i);
+					hLEDCutQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
+					sprintf(hname,"File%dhMuonCutQDC%d",j,i);
+					hMuonCutQDC[j][i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
+				}
 			}
 		}
-
+		
 		for (Int_t i=0; i<numFiles; i++){
 			sprintf(hname,"ledTime_run%d",i+1);
 			ledTime[i] = new TH1F(hname,hname,nqdc_bins,ll_qdc,ul_qdc);
+			sprintf(hname,"hDTFile%d", i+1);
+			hDTFile[i] = new TH1F(hname,hname,0,10,1000);
 		}
 		
 		
@@ -365,7 +377,7 @@ void builtVetoMult2readershort(string Input = ""){
 		// initialize 
 		InputList >> run;
 		if (InputList.eof()) 		break;
-		sprintf(TheFile,"/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/P3K93/OR_run%u.root",run); 	
+		sprintf(TheFile,"/global/project/projectdirs/majorana/data/mjd/surfmjd/data/built/%s/OR_run%u.root",run_dir,run); 	//add %string and make a folder string at beginning of file
 		TChain *VetoTree = new TChain("VetoTree");
 		VetoTree->AddFile(TheFile);
 		Long64_t nentries = VetoTree->GetEntries();
@@ -381,6 +393,9 @@ void builtVetoMult2readershort(string Input = ""){
 		VetoTree->SetBranchAddress("run",&VetoRun);
 		VetoTree->SetBranchAddress("mVeto",&mVeto);
 		VetoTree->SetBranchAddress("vetoEvent",&vetoEvent);
+		uint32_t vBits = 0;
+		VetoTree->SetBranchAddress("vetoBits",&vBits);
+	
 	
 	
 
@@ -406,6 +421,9 @@ void builtVetoMult2readershort(string Input = ""){
 			
 			Float_t MuonQDCtot = 0;
 			Float_t AvgMuonQDCvalue = 0;
+			
+			//mjbits counters
+			Int_t kmccount = 0; //kMissingChannels counter
 			
 			sprintf(hname,"ledtimestamp_run%d",run);
 			ledtimestamp[filesScanned] = new TGraph(nentries);
@@ -448,7 +466,13 @@ void builtVetoMult2readershort(string Input = ""){
 			ledfitslope->SetTitle("(# of led vs run duration) linear fit slope vs run number");
 			ledfitslope->GetXaxis()->SetTitle("Run number");
 			ledfitslope->GetYaxis()->SetTitle("slope (corresponds to frequency)");
-
+			
+			
+			TGraph *gRunvNewdivOld = new TGraph(numFiles);
+			gRunvNewdivOld->SetTitle("(slope/DT_mean vs run number");
+			gRunvNewdivOld->GetXaxis()->SetTitle("Run number");
+			gRunvNewdivOld->GetYaxis()->SetTitle("slope/DT_mean");
+			
 		//=== End ===
 
 		// Loop over VetoTree entries
@@ -456,6 +480,9 @@ void builtVetoMult2readershort(string Input = ""){
 		if (nentries == 0) IsEmpty = true;
 		for (int z = 0; z < nentries; z++) {
 				VetoTree->GetEntry(z);
+				
+				//vbits
+//				if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels())) kmccount++;
 				
 				//Access run duration
 				duration = VetoRun->GetStopTime() - VetoRun->GetStartTime();
@@ -537,7 +564,7 @@ void builtVetoMult2readershort(string Input = ""){
 
 				// multiplicity of panels above threshold
 		       	for (int k=0; k<numPanels; k++) { 
-						hRawQDC[filesScanned][k]->Fill(QDC[k]);
+						if (mode == 0) hRawQDC[filesScanned][k]->Fill(QDC[k]);
 					
 				
 
@@ -593,14 +620,13 @@ void builtVetoMult2readershort(string Input = ""){
 					for (int k=0; k<numPanels; ++k) {
 						if (useThresh) { 
 							if (QDC[k]>ledthresh[k]){
-								hLEDCutQDC[filesScanned][k]->Fill(QDC[k]);
+								if (mode == 0) hLEDCutQDC[filesScanned][k]->Fill(QDC[k]);
 								ledQDCcount[filesScanned][k] += 1;
 								totledQDC[filesScanned][k] += QDC[k];
 								quadtotledQDC[filesScanned][k] += QDC[k]*QDC[k];						
 							}
 						}
 						else {
-						//	if (!IsUnderThreshold[k]) hLEDCutQDC[filesScanned][k]->Fill(QDC[k]); 
 						}	
 						
 					}
@@ -642,7 +668,7 @@ void builtVetoMult2readershort(string Input = ""){
 							if (isMuon && isTopMuon && isBotMuon && !isSouthMuon && !isEastMuon && !isNorthMuon && !isWestMuon){	//the isMuon here is redundant but a good check.
 								gMuonAmpvphitsTB->SetPoint(totmuoncount,QDC[k],muonnumPanelsHit);
 							}	
-							hMuonCutQDC[filesScanned][k]->Fill(QDC[k]);
+							if (mode == 0) hMuonCutQDC[filesScanned][k]->Fill(QDC[k]);
 							hMuonManyQDC[k]->Fill(QDC[k]);
 							hMuonQDC->Fill(QDC[k]);
 							MuonQDCtot += QDC[k];
@@ -739,7 +765,15 @@ void builtVetoMult2readershort(string Input = ""){
 //		cout << "panel number: " << k << " | mean value " << AvgQDC[k] << " | rms value " << rmsQDC[k] << endl;
 		}
 	} 
-
+/*
+	//calc led freq with clint's method
+	for (int j = 0; j<numFiles; j++){
+		dt_maxbin[j] = hLEDCutDT[j]->GetMaximumBin();
+		hLEDCutDT[j]->GetXaxis()->SetRange(dt_maxbin[j]-100,dt_maxbin[j]+100);
+		dt_rms[j] = hLEDCutDT[j]->GetRMS();
+		dt_mean[j] = hLEDCutDT[j]->GetMean();
+	}
+*/
 	//calculate qdc mean for each file
 	for (int j=0; j<numFiles; ++j){		
 		for (int k=0; k<numPanels; ++k){
@@ -752,6 +786,8 @@ void builtVetoMult2readershort(string Input = ""){
 		if (!IsEmpty){
 			ledfitslope->SetPoint(j,runnum[j],slope[j]);
 		}
+//		gRunvNewdivOld->SetPoint(j,runnum[j],dt_mean[j]/slope[j]);
+//		gRunvNewdivOld->SetPoint(j,runnum[j],dt_mean[j]/slope[j]);
 		
 		gRunvDuration->SetPoint(j,runnum[j],Durarray[j]);
 	}
@@ -912,15 +948,19 @@ void builtVetoMult2readershort(string Input = ""){
 	gRunvDuration->SetLineColorAlpha(kWhite,0);
 	gRunvDuration->Write("gRunvDuration",TObject::kOverwrite);
 	
+	gRunvNewdivOld->SetLineColorAlpha(kWhite,0);
+	gRunvNewdivOld->Write("gRunvNewdivOld",TObject::kOverwrite);
 	
-//	TCanvas *vcan0 = new TCanvas("vcan0","raw veto QDC, panels 1-32",0,0,1600,900);
-//	vcan0->Divide(8,4,0,0);
+	if (mode == 0){
+//		TCanvas *vcan0 = new TCanvas("vcan0","raw veto QDC, panels 1-32",0,0,1600,900);
+//		vcan0->Divide(8,4,0,0);
 	
-//	TCanvas *vcan1 = new TCanvas("vcan1","LED Cut veto QDC (ledcut = 20), panels 1-32",0,0,1600,900);
-//	vcan1->Divide(8,4,0,0);
+//		TCanvas *vcan1 = new TCanvas("vcan1","LED Cut veto QDC (ledcut = 20), panels 1-32",0,0,1600,900);
+//		vcan1->Divide(8,4,0,0);
 
-//	TCanvas *vcan2 = new TCanvas("vcan2","Muon Cut veto QDC (all qdc over muon thresh), panels 1-32",0,0,1600,900);
-//	vcan2->Divide(8,4,0,0);
+//		TCanvas *vcan2 = new TCanvas("vcan2","Muon Cut veto QDC (all qdc over muon thresh), panels 1-32",0,0,1600,900);
+//		vcan2->Divide(8,4,0,0);
+	}
 
 //	TCanvas *vcan9 = new TCanvas("vcan9","Muon Cut Multiplicity (muon cut = 0-31)", 0,0,1600,900);
 //	vcan9->Divide(8,4,0,0);	
@@ -956,41 +996,45 @@ void builtVetoMult2readershort(string Input = ""){
 
 	}
 	
-	TDirectory *rawqdc = RootFile->mkdir("RawQDC");
-	TDirectory *ledcutqdc = RootFile->mkdir("LEDCutQDC");
-	TDirectory *muoncutqdc = RootFile->mkdir("MuonCutQDC");
+	if (mode == 0){
+		TDirectory *rawqdc = RootFile->mkdir("RawQDC");
+		TDirectory *ledcutqdc = RootFile->mkdir("LEDCutQDC");
+		TDirectory *muoncutqdc = RootFile->mkdir("MuonCutQDC");
+	}
 	TDirectory *muonmult = RootFile->mkdir("MuonMult");
 	TDirectory *muonmanyqdc = RootFile->mkdir("MuonManyQDC");
 	TDirectory *avgledqdc = RootFile->mkdir("AvgLEDQDC");
 	TDirectory *rmsledqdc = RootFile->mkdir("rmsLEDQDC");
 	TDirectory *ledtimestamps = RootFile->mkdir("LEDTimestamps");
 	TDirectory *muonqdcpernumpanelshit = RootFile->mkdir("MuonQDCPernumPanelsHit");
+	TDirectory *hDTFile = RootFile->mkdir("hDTFile");
 
 	
 	for (Int_t j=0; j<numFiles; j++){
 
-
-		for (Int_t i=0; i<numPanels; i++){
+		if (mode == 0){
+			for (Int_t i=0; i<numPanels; i++){
 		
-			RootFile->cd("RawQDC");
-//			vcan0->cd(i+1);
-//			TVirtualPad *vpad0 = vcan0->cd(i+1); vpad0->SetLogy();
-//			hRawQDC[j][i]->Draw();
-			hRawQDC[j][i]->Write();		// write the raw QDC without fitting
+				RootFile->cd("RawQDC");
+//				vcan0->cd(i+1);
+//				TVirtualPad *vpad0 = vcan0->cd(i+1); vpad0->SetLogy();
+//				hRawQDC[j][i]->Draw();
+				hRawQDC[j][i]->Write();		// write the raw QDC without fitting
 
 			
-			RootFile->cd("LEDCutQDC");
-//			vcan1->cd(i+1);
-//			TVirtualPad *vpad1 = vcan1->cd(i+1); vpad1->SetLogy();
-//			hLEDCutQDC[j][i]->Draw();
-			hLEDCutQDC[j][i]->Write();		
+				RootFile->cd("LEDCutQDC");
+//				vcan1->cd(i+1);
+//				TVirtualPad *vpad1 = vcan1->cd(i+1); vpad1->SetLogy();
+//				hLEDCutQDC[j][i]->Draw();
+				hLEDCutQDC[j][i]->Write();		
 		
-			RootFile->cd("MuonCutQDC");
-//			vcan2->cd(i+1);
-//			TVirtualPad *vpad2 = vcan2->cd(i+1); vpad2->SetLogy();
-//			hMuonCutQDC[j][i]->Draw();
-			hMuonCutQDC[j][i]->Write();	
+				RootFile->cd("MuonCutQDC");
+//				vcan2->cd(i+1);
+//				TVirtualPad *vpad2 = vcan2->cd(i+1); vpad2->SetLogy();
+//				hMuonCutQDC[j][i]->Draw();
+				hMuonCutQDC[j][i]->Write();	
 
+			}	
 		}
 		RootFile->cd("LEDTimestamps");
 //		vcan14->cd(1);
@@ -1055,6 +1099,14 @@ void builtVetoMult2readershort(string Input = ""){
 		gmuonqdcnumPanelsHit[i]->GetXaxis()->SetTitle("QDC value");
 		gmuonqdcnumPanelsHit[i]->GetYaxis()->SetTitle("muonnumPanelsHit");
 		gmuonqdcnumPanelsHit[i]->Write();
+	}
+
+	RootFile->cd("hDTFile");
+	for (Int_t i=0; i<numFiles; i++){
+
+		hDTFile[i]->GetYaxis()->SetTitle("Multiplicity");
+		hDTFile[i]->GetXaxis()->SetTitle("DT (seconds)");
+		hDTFile[i]->Write();
 	}
 */
 	RootFile->cd();
