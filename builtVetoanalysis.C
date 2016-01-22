@@ -157,7 +157,18 @@ for (int z = 0; z < nentries; z++){
 	v->GetEntry(z);
 	
 	//veto error bits
-//	if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels())) kmccount++;
+	if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels)) kmccount++;
+	if (z == 0){
+		vastats << "kMissingChannels output " << MJVetoBits::kMissingChannels;	//<32 veto datas in event
+		vastats << "kExtraChannels output " << MJVetoBits::kExtraChannels;		//>32 veto datas in event
+		vastats << "kScalerOnly output " << MJVetoBits::kScalerOnly;			//Scaler found with no QDC data
+		vastats << "kBadTimeStamp output " << MJVetoBits::kBadTimeStamp;		//timestamp = FFFF FFFF FFFF FFFF
+		vastats << "kQDCOutOfSequence output " << MJVetoBits::kQDCOutOfSequence;//QDCIndex - ScalerIndex != 1 or 2
+		vastats << "kDuplicateChannel output " << MJVetoBits::kDuplicateChannel;//any channel shows up multiple times
+		vastats << "kHWCountMismatch output " << MJVetoBits::kHWCountMismatch;	//event count on scaler differs from event count on QDC
+		vastats << "kNVetoBits output " << MJVetoBits::kNVetoBits;				//???
+	}			
+	
 		
 	//cout << "z = " << z << endl;
 	//v->GetEntry(nentries-1);
@@ -397,10 +408,10 @@ for (int z = 0; z < nentries; z++){
 
 	cout << "Wrote ROOT file." << endl;
 	
-	vastats << "run # = " << run << " seconds" << endl;
+	vastats << "run # = " << run << endl;
 	vastats << "ledcount = " << ledcount << endl;
 	vastats << "muoncount = " << muoncount << endl;
-	vastats << "duration = " << duration << endl;
+	vastats << "duration = " << duration << " seconds." << endl;
 	vastats << "nentries = " << nentries << endl;
 	vastats << "# of entries that flip kMissingChannels bit = " << kmccount << endl;
 	vastats.close();

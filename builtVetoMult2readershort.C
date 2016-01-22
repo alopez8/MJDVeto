@@ -113,6 +113,10 @@ const int runmin = 9676; //first run number in debug list
 const int runmax = 9729; //last run number in debug list
 const int runspace = runmax - runmin + 1; //how many runs between runmax and runmin
 const int mode = 0;	//if mode = 1 it's a short list (include rawqdc), if mode = 0, long list (doesn't include rawqdc)
+if (mode !=0 || mode !=1){
+	cout << "Mode is not set correctly." << endl;
+	break;
+}	
 
 
 // global pointers for qdc histograms.
@@ -162,16 +166,29 @@ void builtVetoMult2readershort(string Input = ""){
   	TH1::AddDirectory(kFALSE); // Global flag: "When a (root) file is closed, all histograms in memory associated with this file are automatically deleted."
 	
 	ofstream lowdt;
-	lowdt.open ("short_zerodeltat.txt");
 	ofstream shortfile;
-	shortfile.open ("short_shortfiles.txt");
 	ofstream emptyfile;
-	emptyfile.open ("short_emptyfiles.txt");
 	ofstream stats;
-	stats.open ("short_Mult2readerstats.txt");
-	
 	ofstream phantom;
-	phantom.open ("short_hitphantompanels.txt");
+	ofstream vBit_stats;
+	if (mode == 0){
+
+		lowdt.open ("short_zerodeltat.txt");
+		shortfile.open ("short_shortfiles.txt");
+		emptyfile.open ("short_emptyfiles.txt");
+		stats.open ("short_Mult2readerstats.txt");
+		phantom.open ("short_hitphantompanels.txt");
+		vBit_stats.open ("short_vBit_stats.txt");
+	}
+	
+	if (mode == 1){
+		lowdt.open ("full_zerodeltat.txt");
+		shortfile.open ("full_shortfiles.txt");
+		emptyfile.open ("full_emptyfiles.txt");
+		stats.open ("full_Mult2readerstats.txt");
+		phantom.open ("full_hitphantompanels.txt");
+		vBit_stats.open ("full_vBit_stats.txt");
+	}	
 	
 	//=== Global counters / variables / plots ===
 	
@@ -424,6 +441,12 @@ void builtVetoMult2readershort(string Input = ""){
 			
 			//mjbits counters
 			Int_t kmccount = 0; //kMissingChannels counter
+			Int_t keccount = 0; //kExtraChannels counter
+			Int_t ksocount = 0; //kScalerOnly counter
+			Int_t kbtscount = 0; //kBadTimeStamp counter
+			Int_t kooscount = 0; //kQDCOutOfSequence counter
+			Int_t kdccount = 0; //kDuplicateChannels counter
+			Int_t khwcmcount = 0; //kHWCountMismatch counter
 			
 			sprintf(hname,"ledtimestamp_run%d",run);
 			ledtimestamp[filesScanned] = new TGraph(nentries);
@@ -482,7 +505,15 @@ void builtVetoMult2readershort(string Input = ""){
 				VetoTree->GetEntry(z);
 				
 				//vbits
-//				if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels())) kmccount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kMissingChannels)) kmccount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kExtraChannels)) keccount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kScalerOnly)) ksocount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kBadTimeStamp)) kbtscount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kQDCOutOfSequence)) kooscount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kDuplicateChannel)) kdccount++;
+				if (MJBits::GetBit(vBits, MJVetoBits::kHWCountMismatch)) khwcmcount++;
+				
+				
 				
 				//Access run duration
 				duration = VetoRun->GetStopTime() - VetoRun->GetStartTime();
